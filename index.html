@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Lückensätze – Wohnen</title>
+  <style>
+    body, html {
+      margin: 0;
+      padding: 0;
+      font-family: Arial, sans-serif;
+      background-color: #f2f2f2;
+      text-align: center;
+    }
+
+    .start-screen, .question-screen, .result-screen {
+      display: none;
+      height: 100vh;
+      justify-content: center;
+      align-items: center;
+      flex-direction: column;
+      padding: 20px;
+    }
+
+    .start-screen {
+      display: flex;
+    }
+
+    .start-screen h1 {
+      color: #333;
+      font-size: 1.8em;
+      margin-bottom: 20px;
+    }
+
+    .start-button {
+      padding: 12px 24px;
+      font-size: 1em;
+      background-color: #e63946;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+    }
+
+    .start-button:hover {
+      background-color: #c62828;
+    }
+
+    .question-screen {
+      display: none;
+    }
+
+    .question {
+      margin-bottom: 30px;
+    }
+
+    .question p {
+      font-size: 1.2em;
+      margin-bottom: 15px;
+    }
+
+    #progress-text {
+      margin-bottom: 10px;
+      font-weight: bold;
+      font-size: 1em;
+    }
+
+    .answers {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      max-width: 300px;
+      margin: 0 auto;
+    }
+
+    .answers button {
+      padding: 10px;
+      font-size: 1em;
+      border: none;
+      border-radius: 8px;
+      background-color: #007bff;
+      color: white;
+      cursor: pointer;
+    }
+
+    .answers button:hover {
+      background-color: #0056b3;
+    }
+
+    .answers button:disabled {
+      cursor: default;
+      opacity: 0.8;
+    }
+
+    .result-screen h2 {
+      font-size: 1.5em;
+    }
+
+    .result-screen p {
+      margin-top: 10px;
+      font-size: 1em;
+    }
+
+    .corrections {
+      text-align: left;
+      max-width: 500px;
+      margin: 20px auto;
+      font-size: 0.95em;
+    }
+
+    .corrections p {
+      margin: 4px 0;
+    }
+  </style>
+</head>
+<body>
+  <div class="start-screen">
+    <h1>Wähle das richtige Wort!</h1>
+    <button class="start-button" onclick="startQuiz()">Los geht’s!</button>
+  </div>
+
+  <div class="question-screen">
+    <p id="progress-text"></p>
+    <div class="question" id="question-container"></div>
+  </div>
+
+  <div class="result-screen">
+    <h2 id="score-text"></h2>
+    <div class="corrections" id="correction-list"></div>
+<button class="start-button" onclick="restartQuiz()">Nochmal spielen</button>
+  </div>
+
+  <script>
+    const questions = [
+      { text: "Bist du __________, wenn du eine verwirrende E-Mail bekommst?", options: ["überfordert", "überraschend", "verwirrt", "ersetzt"], correct: 2 },
+      { text: "Was hättest du gemacht, wenn du heute nicht gearbeitet __________?", options: ["hätte", "hattest", "hättest", "haben"], correct: 2 },
+      { text: "Hättest du bei der kostenlosen Tour __________, wenn du mehr Zeit gehabt hättest?", options: ["mitgemusst", "mitgehabt", "mitgemacht", "mitgespielt"], correct: 2 },
+      { text: "Hat dich deine Arbeit heute __________?", options: ["ersetzt", "überfordert", "überraschend", "angesprochen"], correct: 1 },
+      { text: "Ich sehe mir den Film an. – Wir __________ uns auch den Film an.", options: ["sehen", "sehen uns", "sehen sich", "sehen uns an"], correct: 1 },
+      { text: "Ist eine Katze besser für meine Oma als __________?", options: ["eine künstliche Intelligenz", "der künstlichen Intelligenz", "eine künstliche Stimme", "ein KI"], correct: 0 },
+      { text: "Vor allem Menschen, __________ Rollenspiele mögen, nutzen Charakter-AI.", options: ["dessen", "die", "denen", "deren"], correct: 1 },
+      { text: "Du kannst ChatGPT nutzen, __________ Mails zu übersetzen.", options: ["damit", "um", "dass", "weil"], correct: 1 },
+      { text: "Ich spreche darüber, __________ das Wetter heute ist.", options: ["wie", "ob", "dass", "was"], correct: 0 },
+      { text: "Ich war in __________ – deshalb musste ich früher los.", options: ["Eile", "Reise", "Nähe", "Überraschung"], correct: 0 },
+      { text: "Wir haben den Ort verlassen an dem Tag, __________ es den Mord gab.", options: ["weil", "wann", "wo", "dass"], correct: 2 },
+      { text: "__________ der ganzen Reise war das Wetter schlecht.", options: ["Vor", "Während", "Bevor", "Nach"], correct: 1 },
+      { text: "Ich kenne sie schon. – Ich __________ sie schon lange.", options: ["kannte", "weiß", "konnte", "erlebte"], correct: 0 },
+      { text: "Meine Kollegin hat mich zur Besichtigung __________.", options: ["eingeladen", "überfordert", "übersetzt", "überrascht"], correct: 0 },
+      { text: "Ich hätte gern noch den Park __________, wenn ich mehr Zeit gehabt hätte.", options: ["sehen", "angesehen", "besucht", "gesehen"], correct: 2 },
+      { text: "Die Hörsäle dort sind __________ als bei uns.", options: ["so schön wie", "viel größer", "nicht so einsam", "mehr elektrisch"], correct: 1 },
+      { text: "Ich habe mir den Unterricht angehört, aber war keine Schülerin. Ich habe also nur  __________?", options: ["gearbeitet", "besichtigt", "hospitiert", "überfordert"], correct: 2 },
+      { text: "Kann ChatGPT deinen Beruf __________?", options: ["ersetzt", "ersetzen", "überfordern", "verwirren"], correct: 1 },
+      { text: "Ich war überrascht, wie __________ die Aufgaben waren.", options: ["überfordernd", "verwirrend", "überraschend", "ersetzt"], correct: 1 },
+      { text: "Ich bin schön gewesen. Ich __________ schöner gewesen, wenn ich geschlafen hätte.", options: ["war", "wäre", "bin", "würde"], correct: 1 }
+    ];
+
+    let currentQuestion = 0;
+    let score = 0;
+    let incorrectAnswers = [];
+
+    function startQuiz() {
+      document.querySelector('.start-screen').style.display = 'none';
+      document.querySelector('.question-screen').style.display = 'flex';
+      showQuestion();
+    }
+
+    function showQuestion() {
+      const container = document.getElementById('question-container');
+      const progressText = document.getElementById('progress-text');
+      container.innerHTML = '';
+
+      const q = questions[currentQuestion];
+      progressText.textContent = `Frage ${currentQuestion + 1} von ${questions.length}`;
+
+      const questionText = document.createElement('p');
+      questionText.textContent = q.text;
+      container.appendChild(questionText);
+
+      const answerButtons = document.createElement('div');
+      answerButtons.classList.add('answers');
+
+      q.options.forEach((option, index) => {
+        const btn = document.createElement('button');
+        btn.textContent = option;
+        btn.onclick = () => handleAnswer(btn, index, answerButtons);
+        answerButtons.appendChild(btn);
+      });
+
+      container.appendChild(answerButtons);
+    }
+
+    function handleAnswer(clickedButton, index, buttonContainer) {
+      const q = questions[currentQuestion];
+      const buttons = buttonContainer.querySelectorAll('button');
+
+      buttons.forEach((btn, idx) => {
+        btn.disabled = true;
+        if (idx === q.correct) {
+          btn.style.backgroundColor = 'green';
+        } else if (btn === clickedButton) {
+          btn.style.backgroundColor = 'red';
+        } else {
+          btn.style.backgroundColor = '#aaa';
+        }
+      });
+
+      if (index === q.correct) {
+        score++;
+      } else {
+        incorrectAnswers.push({ question: q.text, correctAnswer: q.options[q.correct] });
+      }
+
+      setTimeout(() => {
+        currentQuestion++;
+        if (currentQuestion < questions.length) {
+          showQuestion();
+        } else {
+          showResult();
+        }
+      }, 1200);
+    }
+
+    function showResult() {
+      document.querySelector('.question-screen').style.display = 'none';
+      const resultScreen = document.querySelector('.result-screen');
+      resultScreen.style.display = 'flex';
+
+      const scoreText = document.getElementById('score-text');
+      scoreText.textContent = `Du hast ${score} von ${questions.length} richtig.`;
+
+      const correctionList = document.getElementById('correction-list');
+      correctionList.innerHTML = '';
+
+      incorrectAnswers.forEach(item => {
+        const p = document.createElement('p');
+        p.innerHTML = `Frage: ${item.question.replace("___", "_____")}<br><strong>Richtige Antwort:</strong> ${item.correctAnswer}`;
+        correctionList.appendChild(p);
+      });
+
+
+function restartQuiz() {
+  currentQuestion = 0;
+  score = 0;
+  incorrectAnswers = [];
+
+  document.querySelector('.result-screen').style.display = 'none';
+  document.querySelector('.start-screen').style.display = 'flex';
+
+  }
+    }
+  </script>
+</body>
+</html>
